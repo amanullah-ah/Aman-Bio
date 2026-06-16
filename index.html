@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HNxAMAN</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blood: #8B0000;
+      --blood-bright: #CC0000;
+      --blood-glow: #FF2222;
+      --blood-dark: #3D0000;
+      --base: #1c1515;
+      --shadow-dark: rgba(0, 0, 0, 0.65);
+      --shadow-light: rgba(120, 50, 50, 0.16);
+      --text: #f5e6e6;
+      --text-muted: rgba(245, 230, 230, 0.55);
+    }
+
+    /* Animatable angle for the rotating-line borders */
+    @property --angle {
+      syntax: '<angle>';
+      inherits: false;
+      initial-value: 0deg;
+    }
+
+    @keyframes spinBorder {
+      to { --angle: 360deg; }
+    }
+
+    html, body {
+      min-height: 100%;
+      width: 100%;
+      overflow-x: hidden;
+    }
+
+    body {
+      background: var(--base);
+      font-family: 'Rajdhani', sans-serif;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      perspective: 1000px;
+    }
+
+    /* ── BACKGROUND ── */
+    .bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .bg-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      animation: orbFloat 8s ease-in-out infinite alternate;
+    }
+
+    .bg-orb-1 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(139,0,0,0.45) 0%, transparent 70%);
+      top: -150px; left: -150px;
+      animation-delay: 0s;
+    }
+
+    .bg-orb-2 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(100,0,0,0.35) 0%, transparent 70%);
+      bottom: -100px; right: -100px;
+      animation-delay: 3s;
+    }
+
+    .bg-orb-3 {
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(180,0,0,0.2) 0%, transparent 70%);
+      top: 40%; left: 60%;
+      animation-delay: 5s;
+    }
+
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(139,0,0,0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(139,0,0,0.07) 1px, transparent 1px);
+      background-size: 50px 50px;
+      transform: perspective(600px) rotateX(20deg) scale(1.3);
+      transform-origin: center bottom;
+    }
+
+    .bg-noise {
+      position: absolute;
+      inset: 0;
+      opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px;
+    }
+
+    @keyframes orbFloat {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(30px, 20px) scale(1.1); }
+    }
+
+    /* ── WRAPPER ── */
+    .wrapper {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 440px;
+      padding: 48px 20px 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    /* ── BACK BUTTON (links to visit.html) ── */
+    .back-btn {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: var(--base);
+      box-shadow:
+        6px 6px 14px var(--shadow-dark),
+        -5px -5px 12px var(--shadow-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 1.2rem;
+      z-index: 2;
+      transition: box-shadow 0.25s ease, transform 0.15s ease, color 0.25s ease;
+      animation: fadeDown 0.8s ease both;
+    }
+
+    .back-btn:hover {
+      color: var(--blood-bright);
+      box-shadow:
+        inset 5px 5px 12px var(--shadow-dark),
+        inset -4px -4px 10px var(--shadow-light);
+    }
+
+    .back-btn:active {
+      transform: scale(0.94);
+    }
+
+    /* ── PROFILE ── */
+    .profile-ring {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      margin-bottom: 24px;
+      animation: fadeDown 0.8s ease both;
+    }
+
+    .profile-ring::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      background: conic-gradient(
+        var(--blood-glow) 0deg,
+        var(--blood) 90deg,
+        var(--blood-dark) 180deg,
+        var(--blood) 270deg,
+        var(--blood-glow) 360deg
+      );
+      animation: spin 4s linear infinite;
+      z-index: 0;
+    }
+
+    .profile-ring::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      background: conic-gradient(
+        var(--blood-glow) 0deg,
+        var(--blood) 90deg,
+        var(--blood-dark) 180deg,
+        var(--blood) 270deg,
+        var(--blood-glow) 360deg
+      );
+      filter: blur(10px);
+      opacity: 0.7;
+      animation: spin 4s linear infinite;
+      z-index: 0;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Thin rotating gradient-line border around the photo, matching the cards */
+    .profile-frame {
+      position: relative;
+      z-index: 1;
+      width: 120px;
+      height: 120px;
+      padding: 4px;
+      border-radius: 50%;
+    }
+
+    .profile-frame::before {
+      --angle: 0deg;
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      padding: 3px;
+      background: conic-gradient(
+        from var(--angle),
+        transparent 0deg,
+        var(--blood-dark) 35deg,
+        var(--blood-glow) 90deg,
+        var(--blood-dark) 145deg,
+        transparent 200deg,
+        transparent 360deg
+      );
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      animation: spinBorder 5s linear infinite;
+      pointer-events: none;
+    }
+
+    .profile-img {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--base);
+      display: block;
+      box-shadow:
+        8px 8px 18px var(--shadow-dark),
+        -6px -6px 16px var(--shadow-light);
+    }
+
+    /* ── NAME ── */
+    .name {
+      font-family: 'Cinzel', serif;
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: 0em;
+      text-align: center;
+      background: linear-gradient(135deg, #fff 0%, #ffcccc 40%, var(--blood-bright) 70%, #ff6666 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: orange;
+      background-clip: text;
+      filter: drop-shadow(0 0 20px rgba(200,0,0,0.5));
+      animation: fadeDown 0.9s 0.1s ease both;
+      margin-bottom: 8px;
+    }
+
+    .tagline {
+      font-size: 0.85rem;
+      font-weight: 800;
+      letter-spacing: 0em;
+      text-transform: uppercase;
+      color: white;
+      text-align: center;
+      animation: fadeDown 1s 0.2s ease both;
+      margin-bottom: 36px;
+    }
+
+    /* ── DIVIDER (neumorphic groove) ── */
+    .divider {
+      width: 60%;
+      height: 8px;
+      border-radius: 50px;
+      background: var(--base);
+      box-shadow:
+        inset 4px 4px 8px var(--shadow-dark),
+        inset -3px -3px 7px var(--shadow-light);
+      margin-bottom: 36px;
+      animation: fadeIn 1s 0.3s ease both;
+      position: relative;
+    }
+
+    .divider::before {
+      content: '𝗛❤︎𝗡';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      border-radius: 20px;
+      transform: translate(-50%, -50%);
+      font-size: 10px;
+      color: orange;
+      background: var(--base);
+      padding: 0 8px;
+      filter: drop-shadow(0 0 4px var(--blood-glow));
+    }
+
+    /* ── LINKS ── */
+    .links {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* Neumorphic raised card with a rotating gradient-line border */
+    .link-card {
+      --angle: 0deg;
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 20px;
+      border-radius: 22px;
+      background: var(--base);
+      border: none;
+      box-shadow:
+        9px 9px 20px var(--shadow-dark),
+        -8px -8px 18px var(--shadow-light);
+      text-decoration: none;
+      color: var(--text);
+      cursor: pointer;
+      transition: box-shadow 0.25s ease, transform 0.15s ease;
+      animation: slideUp 0.6s ease both;
+    }
+
+    .link-card:nth-child(1) { animation-delay: 0.35s; }
+    .link-card:nth-child(2) { animation-delay: 0.45s; }
+    .link-card:nth-child(3) { animation-delay: 0.55s; }
+    .link-card:nth-child(4) { animation-delay: 0.65s; }
+    .link-card:nth-child(5) { animation-delay: 0.75s; }
+    .link-card:nth-child(6) { animation-delay: 0.85s; }
+
+    /* Rotating moving-line border */
+    .link-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1.5px;
+      background: conic-gradient(
+        from var(--angle),
+        transparent 0deg,
+        var(--blood-dark) 35deg,
+        var(--blood-glow) 90deg,
+        var(--blood-dark) 145deg,
+        transparent 200deg,
+        transparent 360deg
+      );
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      animation: spinBorder 5s linear infinite;
+      pointer-events: none;
+      opacity: 0.85;
+    }
+
+    .link-card:hover,
+    .link-card:focus-visible {
+      box-shadow:
+        inset 6px 6px 14px var(--shadow-dark),
+        inset -5px -5px 12px var(--shadow-light);
+    }
+
+    .link-card:active {
+      transform: scale(0.98);
+      box-shadow:
+        inset 7px 7px 16px var(--shadow-dark),
+        inset -6px -6px 13px var(--shadow-light);
+    }
+
+    .link-card:hover .link-arrow {
+      transform: translateX(4px);
+      color: var(--blood-bright);
+    }
+
+    /* ── ICON (neumorphic well) ── */
+    .link-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      background: var(--base);
+      box-shadow:
+        inset 4px 4px 8px var(--shadow-dark),
+        inset -3px -3px 7px var(--shadow-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .link-icon svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    /* ── LINK TEXT ── */
+    .link-info {
+      flex: 1;
+      position: relative;
+      z-index: 1;
+    }
+
+    .link-name {
+      font-family: 'Cinzel', serif;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      line-height: 1;
+      margin-bottom: 3px;
+    }
+
+    .link-handle {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+    }
+
+    .link-arrow {
+      position: relative;
+      z-index: 1;
+      color: gold;
+      font-size: 1rem;
+      font-weight: 800;
+      transition: transform 0.3s ease, color 0.3s ease;
+    }
+
+    /* ── VISIT BUTTON (links to visit.html) ── */
+    .visit-btn {
+      --angle: 0deg;
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: auto;
+      margin-top: 24px;
+      padding: 10px 26px;
+      border-radius: 100px;
+      background: var(--base);
+      border: none;
+      color: var(--text);
+      font-family: 'Cinzel', serif;
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow:
+        6px 6px 14px var(--shadow-dark),
+        -5px -5px 12px var(--shadow-light);
+      transition: box-shadow 0.25s ease, transform 0.15s ease;
+      animation: slideUp 0.6s 0.9s ease both;
+    }
+
+    .visit-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1.5px;
+      background: conic-gradient(
+        from var(--angle),
+        transparent 0deg,
+        var(--blood-dark) 35deg,
+        var(--blood-glow) 90deg,
+        var(--blood-dark) 145deg,
+        transparent 200deg,
+        transparent 360deg
+      );
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      animation: spinBorder 5s linear infinite;
+      pointer-events: none;
+      opacity: 0.9;
+    }
+
+    .visit-btn:hover,
+    .visit-btn:focus-visible {
+      box-shadow:
+        inset 6px 6px 14px var(--shadow-dark),
+        inset -5px -5px 12px var(--shadow-light);
+    }
+
+    .visit-btn:hover .visit-arrow {
+      transform: translateX(4px);
+      color: var(--blood-bright);
+    }
+
+    .visit-btn:active {
+      transform: scale(0.97);
+      box-shadow:
+        inset 7px 7px 16px var(--shadow-dark),
+        inset -6px -6px 13px var(--shadow-light);
+    }
+
+    .visit-arrow {
+      transition: transform 0.3s ease, color 0.3s ease;
+    }
+
+    /* ── FOOTER (neumorphic pill + rotating line border) ── */
+    footer {
+      --angle: 0deg;
+      margin-top: 40px;
+      padding: 12px 30px;
+      font-size: 12px;
+      text-align: center;
+      font-family: 'Rajdhani', sans-serif;
+      letter-spacing: 1px;
+      color: white;
+      background: var(--base);
+      border-radius: 100px;
+      border: none;
+      box-shadow:
+        6px 6px 14px var(--shadow-dark),
+        -5px -5px 12px var(--shadow-light);
+      position: relative;
+      z-index: 1;
+    }
+
+    footer::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1.5px;
+      background: conic-gradient(
+        from var(--angle),
+        transparent 0deg,
+        var(--blood-glow) 70deg,
+        transparent 170deg,
+        transparent 360deg
+      );
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      animation: spinBorder 6s linear infinite;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    footer .yellow {
+      color: #f0b429;
+      font-weight: 700;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px) translateZ(0); }
+      to   { opacity: 1; transform: translateY(0) translateZ(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    /* ── PARTICLES ── */
+    .particles {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      border-radius: 50%;
+      background: var(--blood-bright);
+      opacity: 0;
+      animation: particleFloat linear infinite;
+    }
+
+    @keyframes particleFloat {
+      0%   { transform: translateY(100vh) translateX(0); opacity: 0; }
+      10%  { opacity: 0.6; }
+      90%  { opacity: 0.3; }
+      100% { transform: translateY(-10vh) translateX(20px); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background -->
+  <div class="bg">
+    <div class="bg-grid"></div>
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+    <div class="bg-noise"></div>
+  </div>
+
+
+  <!-- Main Content -->
+  <div class="wrapper">
+
+    <!-- Profile -->
+    <div class="profile-ring">
+      <div class="profile-frame">
+        <img class="profile-img" src="https://ik.imagekit.io/amanphoto/20260531_223012.jpg" alt="HNxAMAN" />
+      </div>
+    </div>
+
+    <h1 class="name">HN-AMAN</h1>
+    <p class="tagline">Creator &nbsp;·&nbsp; Digital Architect</p>
+
+    <div class="divider"></div>
+
+    <!-- Links -->
+    <div class="links">
+
+      <!-- Facebook -->
+      <a class="link-card" href="https://www.facebook.com/share/17K2AK4Y2d/" target="_blank" rel="noopener">
+        <div class="link-icon icon-fb">
+          <svg viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.514c-1.491 0-1.956.93-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+        </div>
+        <div class="link-info">
+          <div class="link-name">Facebook</div>
+          <div class="link-handle"> ͟͟͞͞➳❥ AMAN COME BACK</div>
+        </div>
+        <span class="link-arrow">→</span>
+      </a>
+
+      <!-- TikTok -->
+      <a class="link-card" href="https://www.tiktok.com/@amanullah.736" target="_blank" rel="noopener">
+        <div class="link-icon icon-tt">
+          <svg viewBox="0 0 24 24" fill="#fff"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.17 8.17 0 004.78 1.52V6.75a4.85 4.85 0 01-1.01-.06z"/></svg>
+        </div>
+        <div class="link-info">
+          <div class="link-name">TikTok</div>
+          <div class="link-handle"> ͟͟͞͞➳❥ AMAN COME BACK</div>
+        </div>
+        <span class="link-arrow">→</span>
+      </a>
+
+      <!-- YouTube -->
+      <a class="link-card" href="https://youtube.com/@sidhustudio-29m?si=5omS_ADhovewI2P0" target="_blank" rel="noopener">
+        <div class="link-icon icon-yt">
+          <svg viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+        </div>
+        <div class="link-info">
+          <div class="link-name">YouTube</div>
+          <div class="link-handle"> ͟͟͞͞➳❥ AMAN COME BACK </div>
+        </div>
+        <span class="link-arrow">→</span>
+      </a>
+
+      <!-- WhatsApp -->
+      <a class="link-card" href="https://whatsapp.com/channel/0029Vb8Hsxs72WU1Dx57eu1q" target="_blank" rel="noopener">
+        <div class="link-icon icon-wa">
+          <svg viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        </div>
+        <div class="link-info">
+          <div class="link-name">WhatsApp Channel</div>
+          <div class="link-handle"> ͟͟͞͞➳❥ AMAN COME BACK</div>
+        </div>
+        <span class="link-arrow">→</span>
+      </a>
+
+      <!-- Instagram -->
+      <a class="link-card" href="https://www.instagram.com/amanullah.295?igsh=YzljYTk1ODg3Zg==" target="_blank" rel="noopener">
+        <div class="link-icon icon-ig">
+          <svg viewBox="0 0 24 24" fill="url(#igGrad)">
+            <defs>
+              <linearGradient id="igGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:#f09433"/>
+                <stop offset="25%" style="stop-color:#e6683c"/>
+                <stop offset="50%" style="stop-color:#dc2743"/>
+                <stop offset="75%" style="stop-color:#cc2366"/>
+                <stop offset="100%" style="stop-color:#bc1888"/>
+              </linearGradient>
+            </defs>
+            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+          </svg>
+        </div>
+        <div class="link-info">
+          <div class="link-name">Instagram</div>
+          <div class="link-handle"> ͟͟͞͞➳❥ AMAN COME BACK</div>
+        </div>
+        <span class="link-arrow">→</span>
+      </a>
+
+      <!-- Telegram -->
+      <a class="link-card" href="https://t.me/hn_aman" target="_blank" rel="noopener">
+        <div class="link-icon icon-tg">
+          <svg viewBox="0 0 24 24" fill="#0088CC"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+        </div>
+        <div class="link-info">
+          <div class="link-name">Telegram</div>
+          <div class="link-handle"> ͟͟͞͞➳❥ AMAN COME BACK</div>
+        </div>
+        <span class="link-arrow">→</span>
+      </a>
+
+    </div>
+
+<footer>Developed By <b class="yellow">HNメAMAN</b> | <b class="yellow">AMAN HACKS</b></footer>
+
+    <!-- Visit Now Button (back to entry page) -->
+    <a class="visit-btn" href="visit.html">
+      Visit Now <span class="visit-arrow">→</span>
+    </a>
+<div class="toast" id="toast"></div>
+
+  <script>
+    // Generate particles
+    const container = document.getElementById('particles');
+    for (let i = 0; i < 25; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + 'vw';
+      p.style.width = (Math.random() * 2 + 1) + 'px';
+      p.style.height = p.style.width;
+      p.style.animationDuration = (Math.random() * 12 + 8) + 's';
+      p.style.animationDelay = (Math.random() * 10) + 's';
+      p.style.opacity = Math.random() * 0.5;
+      container.appendChild(p);
+    }
+  </script>
+</body>
+</html>
